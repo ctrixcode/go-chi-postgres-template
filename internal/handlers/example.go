@@ -7,6 +7,8 @@ import (
 
 	"github.com/ctrixcode/go-chi-postgres/internal/models"
 	"github.com/ctrixcode/go-chi-postgres/internal/repository"
+	"github.com/ctrixcode/go-chi-postgres/pkg/errors"
+	"github.com/ctrixcode/go-chi-postgres/pkg/response"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -37,40 +39,39 @@ func (h *ExampleHandler) RegisterRoutes() http.Handler {
 func (h *ExampleHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req models.CreateExampleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.JSONError(w, errors.BadRequestError(errors.ErrBadRequest, err.Error()))
 		return
 	}
 
 	if err := h.validator.Struct(req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.JSONError(w, errors.BadRequestError(errors.ErrValidationFailed, err.Error()))
 		return
 	}
 
 	example, err := h.repo.Create(r.Context(), req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.JSONError(w, errors.InternalServerError(errors.ErrInternalServerError, err.Error()))
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(example)
+	response.JSONSuccess(w, example, http.StatusCreated, "Example created successfully")
 }
 
 func (h *ExampleHandler) Get(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "Invalid UUID", http.StatusBadRequest)
+		response.JSONError(w, errors.BadRequestError(errors.ErrBadRequest, "Invalid UUID"))
 		return
 	}
 
 	example, err := h.repo.GetByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, "Example not found", http.StatusNotFound)
+		response.JSONError(w, errors.NotFoundError(errors.ErrNotFound, "Example not found"))
 		return
 	}
 
-	json.NewEncoder(w).Encode(example)
+	response.JSONSuccess(w, example, http.StatusOK)
 }
 
 func (h *ExampleHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -85,48 +86,48 @@ func (h *ExampleHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	examples, err := h.repo.List(r.Context(), limit, offset)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.JSONError(w, errors.InternalServerError(errors.ErrInternalServerError, err.Error()))
 		return
 	}
 
-	json.NewEncoder(w).Encode(examples)
+	response.JSONSuccess(w, examples, http.StatusOK)
 }
 
 func (h *ExampleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "Invalid UUID", http.StatusBadRequest)
+		response.JSONError(w, errors.BadRequestError(errors.ErrBadRequest, "Invalid UUID"))
 		return
 	}
 
 	var req models.UpdateExampleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.JSONError(w, errors.BadRequestError(errors.ErrBadRequest, err.Error()))
 		return
 	}
 
 	example, err := h.repo.Update(r.Context(), id, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.JSONError(w, errors.InternalServerError(errors.ErrInternalServerError, err.Error()))
 		return
 	}
 
-	json.NewEncoder(w).Encode(example)
+	response.JSONSuccess(w, example, http.StatusOK, "Example updated successfully")
 }
 
 func (h *ExampleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "Invalid UUID", http.StatusBadRequest)
+		response.JSONError(w, errors.BadRequestError(errors.ErrBadRequest, "Invalid UUID"))
 		return
 	}
 
 	if err := h.repo.Delete(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.JSONError(w, errors.InternalServerError(errors.ErrInternalServerError, err.Error()))
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	response.JSONSuccess(w, nil, http.StatusOK, "Example deleted successfully")
 }
