@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"github.com/ctrixcode/go-chi-postgres/internal/database"
 	"github.com/ctrixcode/go-chi-postgres/internal/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -15,6 +16,12 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Get("/", handlers.HelloWorldHandler)
 	r.Get("/health", s.healthHandler)
+
+	// Example Routes
+	exampleRepo := database.NewExampleRepository(s.db.GetDB())
+	exampleHandler := handlers.NewExampleHandler(exampleRepo)
+
+	r.Mount("/examples", exampleHandler.RegisterRoutes())
 
 	return r
 }
