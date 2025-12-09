@@ -5,19 +5,19 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ctrixcode/go-chi-postgres/internal/database"
 	"github.com/ctrixcode/go-chi-postgres/internal/models"
+	"github.com/ctrixcode/go-chi-postgres/internal/repository"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
 type ExampleHandler struct {
-	repo      database.ExampleRepository
+	repo      repository.ExampleRepository
 	validator *validator.Validate
 }
 
-func NewExampleHandler(repo database.ExampleRepository) *ExampleHandler {
+func NewExampleHandler(repo repository.ExampleRepository) *ExampleHandler {
 	return &ExampleHandler{
 		repo:      repo,
 		validator: validator.New(),
