@@ -10,9 +10,11 @@ import (
 )
 
 type Config struct {
-	Port        int
-	DatabaseURL string
-	JWTSecret   string
+	Port               int
+	DatabaseURL        string
+	JWTSecret          string
+	Environment        string
+	CorsAllowedOrigins string
 }
 
 func LoadConfig() *Config {
@@ -37,8 +39,10 @@ func LoadConfig() *Config {
 		dbUser, dbPassword, dbHost, dbPort, dbName, dbSSLMode)
 
 	return &Config{
-		Port:        port,
-		DatabaseURL: databaseURL,
-		JWTSecret:   os.Getenv("JWT_SECRET"),
+		Port:               port,
+		DatabaseURL:        databaseURL,
+		JWTSecret:          os.Getenv("JWT_SECRET"),
+		Environment:        os.Getenv("APP_ENV"),
+		CorsAllowedOrigins: os.Getenv("CORS_ALLOWED_ORIGINS"),
 	}
 }

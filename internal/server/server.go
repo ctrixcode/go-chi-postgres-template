@@ -13,6 +13,7 @@ type Server struct {
 	port   int
 	db     database.Service
 	server *http.Server
+	config *config.Config
 }
 
 func NewServer() *Server {
@@ -21,8 +22,9 @@ func NewServer() *Server {
 	db := database.New(cfg.DatabaseURL)
 
 	s := &Server{
-		port: cfg.Port,
-		db:   db,
+		port:   cfg.Port,
+		db:     db,
+		config: cfg,
 	}
 
 	// Declare Server config

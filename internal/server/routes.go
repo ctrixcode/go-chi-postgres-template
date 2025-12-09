@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/ctrixcode/go-chi-postgres/internal/database"
 	"github.com/ctrixcode/go-chi-postgres/internal/handlers"
@@ -15,8 +16,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	allowedOrigins := []string{"https://*", "http://*"}
+	if s.config.Environment == "production" {
+		allowedOrigins = strings.Split(s.config.CorsAllowedOrigins, ",")
+	}
+
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
