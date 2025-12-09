@@ -10,28 +10,41 @@ import (
 )
 
 type Server struct {
-	port int
-	db   database.Service
+	port   int
+	db     database.Service
+	server *http.Server
 }
 
-func NewServer() *http.Server {
+func NewServer() *Server {
 	cfg := config.LoadConfig()
 
 	db := database.New(cfg.DatabaseURL)
 
-	NewServer := &Server{
+	s := &Server{
 		port: cfg.Port,
 		db:   db,
 	}
 
 	// Declare Server config
-	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", NewServer.port),
-		Handler:      NewServer.RegisterRoutes(),
+	s.server = &http.Server{
+		Addr:         fmt.Sprintf(":%d", s.port),
+		Handler:      s.RegisterRoutes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 
-	return server
+	return s
+}
+
+func (s *Server) Start() error {
+	return s.server.ListenAndServe()
+}
+
+func (s *Server) Shutdown() error {
+	return s.db.Close()
+}
+
+func (s *Server) GetHTTPServer() *http.Server {
+	return s.server
 }
