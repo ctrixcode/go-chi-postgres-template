@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -32,7 +32,9 @@ func New(connectionString string) Service {
 
 	db, err := sqlx.Connect("pgx", connectionString)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("failed to connect to database", "error", err)
+		// It's better to return error here, but for now we keep the panic behavior to match previous logic
+		panic(err)
 	}
 
 	dbInstance = &service{
@@ -52,7 +54,7 @@ func (s *service) Health() map[string]string {
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
-		log.Fatalf(fmt.Sprintf("db down: %v", err)) // Log fatal error
+		slog.Error("db down", "error", err)
 		return stats
 	}
 
@@ -91,7 +93,7 @@ func (s *service) Health() map[string]string {
 }
 
 func (s *service) Close() error {
-	log.Printf("Disconnected from database: %s", "postgres")
+	slog.Info("Disconnected from database", "database", "postgres")
 	return s.db.Close()
 }
 

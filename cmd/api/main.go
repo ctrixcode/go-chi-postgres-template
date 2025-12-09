@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,9 +10,13 @@ import (
 	"time"
 
 	"github.com/ctrixcode/go-chi-postgres/internal/server"
+	"github.com/ctrixcode/go-chi-postgres/pkg/logger"
 )
 
 func main() {
+	// Setup structured logging
+	logger.Init()
+
 	s := server.NewServer()
 
 	// Server run context
@@ -30,22 +34,26 @@ func main() {
 		go func() {
 			<-shutdownCtx.Done()
 			if shutdownCtx.Err() == context.DeadlineExceeded {
-				log.Fatal("graceful shutdown timed out.. forcing exit.")
+				slog.Error("graceful shutdown timed out.. forcing exit.")
+				os.Exit(1)
 			}
 		}()
 
 		// Trigger graceful shutdown
 		err := s.GetHTTPServer().Shutdown(shutdownCtx)
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("server shutdown error", "error", err)
+			os.Exit(1)
 		}
 		serverStopCtx()
 	}()
 
 	// Run the server
+	slog.Info("server starting", "port", s.GetHTTPServer().Addr)
 	err := s.Start()
 	if err != nil && err != http.ErrServerClosed {
-		log.Fatal(err)
+		slog.Error("server failed to start", "error", err)
+		os.Exit(1)
 	}
 
 	// Wait for server context to be stopped
@@ -53,8 +61,9 @@ func main() {
 
 	// Close database connection
 	if err := s.Shutdown(); err != nil {
-		log.Fatal(err)
+		slog.Error("database shutdown error", "error", err)
+		os.Exit(1)
 	}
 
-	log.Println("Server exited properly")
+	slog.Info("server exited properly")
 }

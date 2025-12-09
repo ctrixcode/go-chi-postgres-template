@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -17,7 +17,7 @@ type Config struct {
 func LoadConfig() *Config {
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("Error loading .env file")
+		slog.Warn("Error loading .env file")
 	}
 
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
