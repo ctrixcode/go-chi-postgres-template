@@ -16,11 +16,7 @@ type Server struct {
 	config *config.Config
 }
 
-func NewServer() *Server {
-	cfg := config.LoadConfig()
-
-	db := database.New(cfg.DatabaseURL)
-
+func NewServer(cfg *config.Config, db database.Service) *Server {
 	s := &Server{
 		port:   cfg.Port,
 		db:     db,

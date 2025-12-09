@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ctrixcode/go-chi-postgres/internal/config"
+	"github.com/ctrixcode/go-chi-postgres/internal/database"
 	"github.com/ctrixcode/go-chi-postgres/internal/server"
 	"github.com/ctrixcode/go-chi-postgres/pkg/logger"
 )
@@ -18,7 +20,10 @@ func main() {
 	// Setup structured logging
 	logger.Init()
 
-	s := server.NewServer()
+	cfg := config.LoadConfig()
+	db := database.New(cfg.DatabaseURL)
+
+	s := server.NewServer(cfg, db)
 
 	// Server run context
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())
