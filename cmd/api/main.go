@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -49,7 +50,7 @@ func main() {
 	}()
 
 	// Run the server
-	slog.Info("server starting", "port", s.GetHTTPServer().Addr)
+	slog.Info("server starting", "addr", fmt.Sprintf("http://localhost%s", s.GetHTTPServer().Addr))
 	err := s.Start()
 	if err != nil && err != http.ErrServerClosed {
 		slog.Error("server failed to start", "error", err)

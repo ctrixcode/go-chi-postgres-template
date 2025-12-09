@@ -40,6 +40,7 @@ func New(connectionString string) Service {
 	dbInstance = &service{
 		db: db,
 	}
+	slog.Info("Connected to database", "database", "postgres")
 	return dbInstance
 }
 
