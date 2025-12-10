@@ -6,6 +6,7 @@ import (
 
 	"github.com/ctrixcode/go-chi-postgres/internal/database"
 	"github.com/ctrixcode/go-chi-postgres/internal/handlers"
+	"github.com/ctrixcode/go-chi-postgres/internal/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -35,7 +36,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// Example Routes
 	exampleRepo := database.NewExampleRepository(s.db.GetDB())
-	exampleHandler := handlers.NewExampleHandler(exampleRepo)
+	exampleService := services.NewExampleService(exampleRepo)
+	exampleHandler := handlers.NewExampleHandler(exampleService)
 
 	r.Mount("/examples", exampleHandler.RegisterRoutes())
 

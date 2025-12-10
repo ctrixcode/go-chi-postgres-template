@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/ctrixcode/go-chi-postgres/internal/models"
-	"github.com/ctrixcode/go-chi-postgres/internal/repository"
+	"github.com/ctrixcode/go-chi-postgres/internal/services"
 	"github.com/ctrixcode/go-chi-postgres/pkg/errors"
 	"github.com/ctrixcode/go-chi-postgres/pkg/response"
 	"github.com/go-chi/chi/v5"
@@ -15,13 +15,13 @@ import (
 )
 
 type ExampleHandler struct {
-	repo      repository.ExampleRepository
+	service   services.ExampleService
 	validator *validator.Validate
 }
 
-func NewExampleHandler(repo repository.ExampleRepository) *ExampleHandler {
+func NewExampleHandler(service services.ExampleService) *ExampleHandler {
 	return &ExampleHandler{
-		repo:      repo,
+		service:   service,
 		validator: validator.New(),
 	}
 }
@@ -48,7 +48,7 @@ func (h *ExampleHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	example, err := h.repo.Create(r.Context(), req)
+	example, err := h.service.Create(r.Context(), req)
 	if err != nil {
 		response.JSONError(w, errors.InternalServerError(errors.ErrInternalServerError, err.Error()))
 		return
@@ -65,7 +65,7 @@ func (h *ExampleHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	example, err := h.repo.GetByID(r.Context(), id)
+	example, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
 		response.JSONError(w, errors.NotFoundError(errors.ErrNotFound, "Example not found"))
 		return
@@ -84,7 +84,7 @@ func (h *ExampleHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	offset, _ := strconv.ParseUint(offsetStr, 10, 64)
 
-	examples, err := h.repo.List(r.Context(), limit, offset)
+	examples, err := h.service.List(r.Context(), limit, offset)
 	if err != nil {
 		response.JSONError(w, errors.InternalServerError(errors.ErrInternalServerError, err.Error()))
 		return
@@ -107,7 +107,7 @@ func (h *ExampleHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	example, err := h.repo.Update(r.Context(), id, req)
+	example, err := h.service.Update(r.Context(), id, req)
 	if err != nil {
 		response.JSONError(w, errors.InternalServerError(errors.ErrInternalServerError, err.Error()))
 		return
@@ -124,7 +124,7 @@ func (h *ExampleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Delete(r.Context(), id); err != nil {
+	if err := h.service.Delete(r.Context(), id); err != nil {
 		response.JSONError(w, errors.InternalServerError(errors.ErrInternalServerError, err.Error()))
 		return
 	}
