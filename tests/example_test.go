@@ -6,13 +6,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/ctrixcode/go-chi-postgres/internal/models"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateExample(t *testing.T) {
-	s := NewTestServer()
+	s, mock := NewTestServerWithMock()
+	defer mock.ExpectationsWereMet()
 
 	// Create request body
 	reqBody := models.CreateExampleRequest{
@@ -21,6 +25,14 @@ func TestCreateExample(t *testing.T) {
 		IsPremium:   true,
 	}
 	body, _ := json.Marshal(reqBody)
+
+	// Set up mock expectations
+	rows := sqlmock.NewRows([]string{"id", "name", "lucky_number", "is_premium", "created_at", "updated_at"}).
+		AddRow(uuid.New(), "Test Example", 42.0, true, time.Now(), time.Now())
+
+	mock.ExpectQuery(`INSERT INTO examples`).
+		WithArgs("Test Example", 42.0, true).
+		WillReturnRows(rows)
 
 	// Create Request
 	req, _ := http.NewRequest("POST", "/examples/", bytes.NewBuffer(body))
@@ -31,13 +43,24 @@ func TestCreateExample(t *testing.T) {
 	s.RegisterRoutes().ServeHTTP(rr, req)
 
 	// Assertions
-	// Note: This will fail because we're using a mock DB that returns nil
-	// In a real test, you'd use a test database or a more sophisticated mock
-	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.Equal(t, http.StatusCreated, rr.Code)
+
+	var response map[string]interface{}
+	json.Unmarshal(rr.Body.Bytes(), &response)
+	assert.Equal(t, "Test Example", response["data"].(map[string]interface{})["name"])
 }
 
 func TestListExamples(t *testing.T) {
-	s := NewTestServer()
+	s, mock := NewTestServerWithMock()
+	defer mock.ExpectationsWereMet()
+
+	// Set up mock expectations
+	rows := sqlmock.NewRows([]string{"id", "name", "lucky_number", "is_premium", "created_at", "updated_at"}).
+		AddRow(uuid.New(), "Example 1", 10.0, true, time.Now(), time.Now()).
+		AddRow(uuid.New(), "Example 2", 20.0, false, time.Now(), time.Now())
+
+	mock.ExpectQuery(`SELECT \* FROM examples`).
+		WillReturnRows(rows)
 
 	// Create Request
 	req, _ := http.NewRequest("GET", "/examples/", nil)
@@ -47,39 +70,72 @@ func TestListExamples(t *testing.T) {
 	s.RegisterRoutes().ServeHTTP(rr, req)
 
 	// Assertions
-	// Note: This will fail because we're using a mock DB that returns nil
-	// In a real test, you'd use a test database or a more sophisticated mock
-	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var response map[string]interface{}
+	err := json.Unmarshal(rr.Body.Bytes(), &response)
+	assert.NoError(t, err)
+
+	// Check if data exists and is the right type
+	if response["data"] != nil {
+		data := response["data"].([]interface{})
+		assert.Equal(t, 2, len(data))
+	} else {
+		t.Logf("Response body: %s", rr.Body.String())
+		t.Fatal("response data is nil")
+	}
 }
 
 func TestGetExample(t *testing.T) {
-	s := NewTestServer()
+	s, mock := NewTestServerWithMock()
+	defer mock.ExpectationsWereMet()
 
-	// Create Request with a valid UUID
-	req, _ := http.NewRequest("GET", "/examples/550e8400-e29b-41d4-a716-446655440000", nil)
+	testID := uuid.New()
+
+	// Set up mock expectations
+	rows := sqlmock.NewRows([]string{"id", "name", "lucky_number", "is_premium", "created_at", "updated_at"}).
+		AddRow(testID, "Test Example", 42.0, true, time.Now(), time.Now())
+
+	mock.ExpectQuery(`SELECT \* FROM examples`).
+		WithArgs(testID).
+		WillReturnRows(rows)
+
+	// Create Request
+	req, _ := http.NewRequest("GET", "/examples/"+testID.String(), nil)
 	rr := httptest.NewRecorder()
 
 	// Execute Request
 	s.RegisterRoutes().ServeHTTP(rr, req)
 
 	// Assertions
-	// Note: This will fail because we're using a mock DB that returns nil
-	// In a real test, you'd use a test database or a more sophisticated mock
-	assert.Equal(t, http.StatusNotFound, rr.Code)
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var response map[string]interface{}
+	json.Unmarshal(rr.Body.Bytes(), &response)
+	assert.Equal(t, "Test Example", response["data"].(map[string]interface{})["name"])
 }
 
 func TestUpdateExample(t *testing.T) {
-	s := NewTestServer()
+	s, mock := NewTestServerWithMock()
+	defer mock.ExpectationsWereMet()
 
-	// Create request body
+	testID := uuid.New()
 	name := "Updated Example"
 	reqBody := models.UpdateExampleRequest{
 		Name: &name,
 	}
 	body, _ := json.Marshal(reqBody)
 
-	// Create Request with a valid UUID
-	req, _ := http.NewRequest("PUT", "/examples/550e8400-e29b-41d4-a716-446655440000", bytes.NewBuffer(body))
+	// Set up mock expectations
+	rows := sqlmock.NewRows([]string{"id", "name", "lucky_number", "is_premium", "created_at", "updated_at"}).
+		AddRow(testID, "Updated Example", 42.0, true, time.Now(), time.Now())
+
+	mock.ExpectQuery(`UPDATE examples`).
+		WithArgs(sqlmock.AnyArg(), "Updated Example", testID).
+		WillReturnRows(rows)
+
+	// Create Request
+	req, _ := http.NewRequest("PUT", "/examples/"+testID.String(), bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
@@ -87,23 +143,31 @@ func TestUpdateExample(t *testing.T) {
 	s.RegisterRoutes().ServeHTTP(rr, req)
 
 	// Assertions
-	// Note: This will fail because we're using a mock DB that returns nil
-	// In a real test, you'd use a test database or a more sophisticated mock
-	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var response map[string]interface{}
+	json.Unmarshal(rr.Body.Bytes(), &response)
+	assert.Equal(t, "Updated Example", response["data"].(map[string]interface{})["name"])
 }
 
 func TestDeleteExample(t *testing.T) {
-	s := NewTestServer()
+	s, mock := NewTestServerWithMock()
+	defer mock.ExpectationsWereMet()
 
-	// Create Request with a valid UUID
-	req, _ := http.NewRequest("DELETE", "/examples/550e8400-e29b-41d4-a716-446655440000", nil)
+	testID := uuid.New()
+
+	// Set up mock expectations
+	mock.ExpectExec(`DELETE FROM examples`).
+		WithArgs(testID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	// Create Request
+	req, _ := http.NewRequest("DELETE", "/examples/"+testID.String(), nil)
 	rr := httptest.NewRecorder()
 
 	// Execute Request
 	s.RegisterRoutes().ServeHTTP(rr, req)
 
 	// Assertions
-	// Note: This will fail because we're using a mock DB that returns nil
-	// In a real test, you'd use a test database or a more sophisticated mock
-	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.Equal(t, http.StatusOK, rr.Code)
 }
