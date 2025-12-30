@@ -15,7 +15,7 @@ import (
 )
 
 func TestCreateExample(t *testing.T) {
-	s, mock := NewTestServerWithMock()
+	s, mock := NewTestServer()
 	defer mock.ExpectationsWereMet()
 
 	// Create request body
@@ -51,7 +51,7 @@ func TestCreateExample(t *testing.T) {
 }
 
 func TestListExamples(t *testing.T) {
-	s, mock := NewTestServerWithMock()
+	s, mock := NewTestServer()
 	defer mock.ExpectationsWereMet()
 
 	// Set up mock expectations
@@ -87,7 +87,7 @@ func TestListExamples(t *testing.T) {
 }
 
 func TestGetExample(t *testing.T) {
-	s, mock := NewTestServerWithMock()
+	s, mock := NewTestServer()
 	defer mock.ExpectationsWereMet()
 
 	testID := uuid.New()
@@ -116,7 +116,7 @@ func TestGetExample(t *testing.T) {
 }
 
 func TestUpdateExample(t *testing.T) {
-	s, mock := NewTestServerWithMock()
+	s, mock := NewTestServer()
 	defer mock.ExpectationsWereMet()
 
 	testID := uuid.New()
@@ -151,7 +151,7 @@ func TestUpdateExample(t *testing.T) {
 }
 
 func TestDeleteExample(t *testing.T) {
-	s, mock := NewTestServerWithMock()
+	s, mock := NewTestServer()
 	defer mock.ExpectationsWereMet()
 
 	testID := uuid.New()

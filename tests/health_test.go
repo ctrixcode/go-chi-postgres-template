@@ -10,7 +10,7 @@ import (
 
 func TestHealthCheck(t *testing.T) {
 	// Setup
-	s := NewTestServer()
+	s, _ := NewTestServer()
 
 	// Create Request
 	req, _ := http.NewRequest("GET", "/health", nil)
