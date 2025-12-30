@@ -14,12 +14,8 @@ import (
 func main() {
 	logger.Init()
 
-	// cfg := config.LoadConfig() // Not needed as we read env vars directly
-	_ = config.LoadConfig() // Load .env file but ignore config struct
+	_ = config.LoadConfig()
 
-	// Connect to 'postgres' database to create the new database
-	// We need to parse the existing URL and replace the dbname
-	// For simplicity, we'll reconstruct a connection string to the default 'postgres' db
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
 	dbUser := os.Getenv("DB_USER")
